@@ -28,11 +28,15 @@ zle -N peco-history-selection
 bindkey '^R' peco-history-selection
 
 # pecoでcd
-jjc() {
+peco-cd() {
   ls | pcd
 }
+zle -N peco-cd
+bindkey '^J^J' peco-cd
 
 # pecoでmei repo ls
-jjr() {
-  ls ~/gits | pcd
+peco-mei-repo-ls() {
+  mei repo ls | pcd
 }
+zle -N peco-mei-repo-ls
+bindkey '^J^R' peco-mei-repo-ls
