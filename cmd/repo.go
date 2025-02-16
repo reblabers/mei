@@ -6,53 +6,21 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"mei/internal/config"
 	"github.com/spf13/cobra"
 )
 
-//go:embed templates/custom.sh
-var customConfigTemplate string
-
 //go:embed templates/exclude.txt
 var excludeConfigTemplate string
 
-// getCommentPrefix はファイル拡張子に応じたコメント記号を返します
-func getCommentPrefix(filename string) string {
-	ext := strings.ToLower(filepath.Ext(filename))
-	switch ext {
-	default:
-		return "#"
-	}
-}
-
-var setupCmd = &cobra.Command{
-	Use:   "setup",
-	Short: "各種セットアップを行います",
-}
-
-var shellSetupCmd = &cobra.Command{
-	Use:   "shell",
-	Short: "シェルの設定を行います",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		homeDir := os.Getenv("HOME")
-		zprofilePath := filepath.Join(homeDir, ".zprofile")
-
-		blockManager := config.NewBlockManager("custom", customConfigTemplate)
-		blockManager.WithCommentPrefix(getCommentPrefix(zprofilePath))
-
-		if err := blockManager.UpdateFile(zprofilePath); err != nil {
-			return fmt.Errorf("設定の更新に失敗しました: %w", err)
-		}
-
-		fmt.Println("シェルの設定を更新しました")
-		return nil
-	},
+var repoCmd = &cobra.Command{
+	Use:   "repo",
+	Short: "リポジトリ関連のコマンドです",
 }
 
 var repoSetupCmd = &cobra.Command{
-	Use:   "repo",
+	Use:   "setup",
 	Short: "リポジトリの設定を行います",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// カレントディレクトリ名を取得
@@ -76,8 +44,7 @@ var repoSetupCmd = &cobra.Command{
 			return fmt.Errorf("infoディレクトリの作成に失敗しました: %w", err)
 		}
 
-		blockManager := config.NewBlockManager("mei", excludeConfigTemplate)
-		blockManager.WithCommentPrefix(getCommentPrefix(excludePath))
+		blockManager := config.NewBlockManager("mei", excludeConfigTemplate, "#")
 
 		if err := blockManager.UpdateFile(excludePath); err != nil {
 			return fmt.Errorf("excludeファイルの更新に失敗しました: %w", err)
@@ -97,7 +64,6 @@ var repoSetupCmd = &cobra.Command{
 			gitCommands := []struct {
 				args []string
 				desc string
-				// エラーを無視するかどうか
 				ignoreError bool
 			}{
 				{[]string{"config", "--local", "user.name", user}, "ユーザー名の設定", false},
@@ -120,7 +86,6 @@ var repoSetupCmd = &cobra.Command{
 	},
 }
 
-
 // runGitCommand はGitコマンドを実行します
 func runGitCommand(gitDir string, args ...string) error {
 	cmd := exec.Command("git", args...)
@@ -129,9 +94,8 @@ func runGitCommand(gitDir string, args ...string) error {
 	return cmd.Run()
 }
 
-
 func init() {
-	rootCmd.AddCommand(setupCmd)
-	setupCmd.AddCommand(shellSetupCmd, repoSetupCmd)
+	rootCmd.AddCommand(repoCmd)
+	repoCmd.AddCommand(repoSetupCmd)
 	repoSetupCmd.Flags().String("user", "", "Gitユーザー名を指定します")
 }

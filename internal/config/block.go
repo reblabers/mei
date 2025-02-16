@@ -15,18 +15,12 @@ type BlockManager struct {
 }
 
 // NewBlockManager は新しいBlockManagerを作成します
-func NewBlockManager(label string, content string) *BlockManager {
+func NewBlockManager(label string, content string, commentPrefix string) *BlockManager {
 	return &BlockManager{
 		Label:         label,
 		Content:       content,
-		CommentPrefix: "#", // デフォルトは#
+		CommentPrefix: commentPrefix,
 	}
-}
-
-// WithCommentPrefix はコメント記号を設定します
-func (b *BlockManager) WithCommentPrefix(prefix string) *BlockManager {
-	b.CommentPrefix = prefix
-	return b
 }
 
 // Format はブロックを整形します
