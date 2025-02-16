@@ -1,0 +1,17 @@
+mei() {
+  "{{.HomeDir}}/.local/bin/mei" "$@"
+}
+
+alias pc="peco"
+alias xa="xargs"
+alias cdx="anyx cd"
+
+meip() {
+  mei "$@" | peco
+}
+
+anyx() {
+  local stdin
+  read -r stdin
+  "$@" "$stdin"
+}

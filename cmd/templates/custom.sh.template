@@ -1,5 +1,2 @@
 # mei
 eval "$({{.HomeDir}}/.local/bin/mei activate {{.Shell}})"
-
-alias pc="peco"
-alias xa="xargs"

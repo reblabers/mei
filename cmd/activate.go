@@ -1,20 +1,40 @@
 package cmd
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
+	"text/template"
+	"bytes"
 
 	"github.com/spf13/cobra"
 )
 
-// generateShellScript はシェルスクリプトを生成します
-func generateShellScript() string {
-	homeDir := os.Getenv("HOME")
-	return fmt.Sprintf(`mei() {
-  "%s/.local/bin/mei" "$@"
+//go:embed templates/activate.sh.template
+var activateTemplate string
+
+type activateTemplateData struct {
+	HomeDir string
 }
-`, homeDir)
+
+// generateShellScript はシェルスクリプトを生成します
+func generateShellScript() (string, error) {
+	tmpl, err := template.New("activate").Parse(activateTemplate)
+	if err != nil {
+		return "", fmt.Errorf("テンプレートの解析に失敗しました: %w", err)
+	}
+
+	data := activateTemplateData{
+		HomeDir: os.Getenv("HOME"),
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("テンプレートの実行に失敗しました: %w", err)
+	}
+
+	return buf.String(), nil
 }
 
 // validateMeiCommand はmeiコマンドの存在を確認します
@@ -36,7 +56,12 @@ func newShellActivateCmd(shell string) *cobra.Command {
 				return err
 			}
 
-			fmt.Print(generateShellScript())
+			script, err := generateShellScript()
+			if err != nil {
+				return err
+			}
+
+			fmt.Print(script)
 			return nil
 		},
 		Example: fmt.Sprintf(`  # %sの設定を追加する場合:

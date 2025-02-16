@@ -25,9 +25,13 @@ func NewBlockManager(label string, content string, commentPrefix string) *BlockM
 
 // Format はブロックを整形します
 func (b *BlockManager) Format() string {
+	content := b.Content
+	if !strings.HasSuffix(content, "\n") {
+		content += "\n"
+	}
 	return fmt.Sprintf("%s BEGIN:%s\n%s%s END:%s\n",
 		b.CommentPrefix, b.Label,
-		b.Content,
+		content,
 		b.CommentPrefix, b.Label)
 }
 
