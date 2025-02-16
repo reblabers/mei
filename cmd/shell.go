@@ -31,8 +31,33 @@ var shellSetupCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		shell := args[0]
+		
+		// シェル名の正規化（パスから取得）
+		shell = filepath.Base(shell)
+		
+		// サポートされているシェルの確認
+		supportedShells := map[string]bool{
+			"bash": true,
+			"zsh":  true,
+		}
+		
+		if !supportedShells[shell] {
+			return fmt.Errorf("サポートされていないシェルです: %s (サポート: bash, zsh)", shell)
+		}
+
 		homeDir := os.Getenv("HOME")
-		zprofilePath := filepath.Join(homeDir, ".zprofile")
+		rcFile := ""
+		reloadCmd := ""
+		
+		// シェル固有の設定
+		switch shell {
+		case "zsh":
+			rcFile = filepath.Join(homeDir, ".zprofile")
+			reloadCmd = ". ~/.zprofile"
+		case "bash":
+			rcFile = filepath.Join(homeDir, ".bash_profile")
+			reloadCmd = ". ~/.bash_profile"
+		}
 
 		// テンプレートを処理
 		tmpl, err := template.New("custom").Parse(customConfigTemplate)
@@ -52,11 +77,13 @@ var shellSetupCmd = &cobra.Command{
 
 		blockManager := config.NewBlockManager("custom", buf.String(), "#")
 
-		if err := blockManager.UpdateFile(zprofilePath); err != nil {
+		if err := blockManager.UpdateFile(rcFile); err != nil {
 			return fmt.Errorf("設定の更新に失敗しました: %w", err)
 		}
 
-		fmt.Println("シェルの設定を更新しました")
+		fmt.Printf("シェルの設定を更新しました\n")
+		fmt.Printf("設定を反映するには以下のコマンドを実行してください:\n")
+		fmt.Printf("  %s\n", reloadCmd)
 		return nil
 	},
 }
