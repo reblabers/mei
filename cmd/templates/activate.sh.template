@@ -2,16 +2,18 @@ mei() {
   "{{.HomeDir}}/.local/bin/mei" "$@"
 }
 
-alias pc="peco"
-alias xa="xargs"
-alias cdx="anyx cd"
-
 meip() {
   mei "$@" | peco
 }
 
-anyx() {
+xa() {
   local stdin
   read -r stdin
   "$@" "$stdin"
 }
+
+cdx() {
+  xa cd
+}
+
+alias pc="peco"
