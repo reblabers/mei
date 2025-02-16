@@ -7,18 +7,14 @@ meip() {
 }
 
 # aliases
-alias pc="peco"
+alias pxa="peco | xa"
+alias pcd="peco | xa cd"
 
 # similar to `something | xargs command`
 xa() {
   local stdin
   read -r stdin
   "$@" "$stdin"
-}
-
-# similar to `something | cd`
-xcd() {
-  xa cd
 }
 
 # pecoでhistoryを選択
