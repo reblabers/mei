@@ -96,80 +96,6 @@ var repoSetupCmd = &cobra.Command{
 	},
 }
 
-var repoFavCmd = &cobra.Command{
-	Use:   "fav",
-	Short: "お気に入りリポジトリを表示します",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		favorites, err := config.LoadFavorites()
-		if err != nil {
-			return fmt.Errorf("お気に入りの読み込みに失敗しました: %w", err)
-		}
-
-		validRepos := favorites.GetValidRepositories()
-		for _, repo := range validRepos {
-			fmt.Println(repo)
-		}
-		return nil
-	},
-}
-
-var repoFavAddCmd = &cobra.Command{
-	Use:   "add",
-	Short: "現在のgitディレクトリをお気に入りに追加します",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		currentDir, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("カレントディレクトリの取得に失敗しました: %w", err)
-		}
-
-		// gitがないディレクトリならエラー
-		gitDir := filepath.Join(currentDir, ".git")
-		if _, err := os.Stat(gitDir); os.IsNotExist(err) {
-			return fmt.Errorf("Gitリポジトリが見つかりません")
-		}
-
-		favorites, err := config.LoadFavorites()
-		if err != nil {
-			return fmt.Errorf("お気に入りの読み込みに失敗しました: %w", err)
-		}
-
-		if err := favorites.Add(currentDir); err != nil {
-			return err
-		}
-
-		if err := favorites.Save(); err != nil {
-			return fmt.Errorf("お気に入りの保存に失敗しました: %w", err)
-		}
-
-		fmt.Printf("お気に入りに追加しました: %s\n", currentDir)
-		return nil
-	},
-}
-
-// repoLsCmd の定義
-var repoLsCmd = &cobra.Command{
-	Use:   "ls",
-	Short: "リポジトリの一覧を表示します",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("ホームディレクトリの取得に失敗しました: %w", err)
-		}
-		gitsDir := filepath.Join(homeDir, "gits")
-		files, err := os.ReadDir(gitsDir)
-		if err != nil {
-			return fmt.Errorf("ディレクトリの読み込みに失敗しました: %w", err)
-		}
-		for _, file := range files {
-			if !file.IsDir() {
-				continue
-			}
-			fmt.Println(filepath.Join(gitsDir, file.Name()))
-		}
-		return nil
-	},
-}
-
 // runGitCommand はGitコマンドを実行します
 func runGitCommand(gitDir string, args ...string) error {
 	cmd := exec.Command("git", args...)
@@ -209,8 +135,5 @@ func copyCursorDirectory(destRoot string) error {
 func init() {
 	rootCmd.AddCommand(repoCmd)
 	repoCmd.AddCommand(repoSetupCmd)
-	repoCmd.AddCommand(repoFavCmd)
-	repoFavCmd.AddCommand(repoFavAddCmd)
-	repoCmd.AddCommand(repoLsCmd)
 	repoSetupCmd.Flags().String("user", "", "Gitユーザー名を指定します")
 }
