@@ -1,0 +1,20 @@
+---
+description: Tasks before writing code
+globs: *.kt, *.sh, *.py, *.go
+---
+Before writing code:
+1. Analyze all code files thoroughly
+2. Get full context
+3. Create `{featurename}.md` file into @.cursor/tmp
+3. Write an implementation plan to a md file
+4. Then implement code
+
+Analysis and Planning:
+* "please start analyzing full flow thoroughly, always state a confidence score 1 to 10"
+* "List all assumptions and uncertainties you need to clear up before completing this task."
+
+Best practices:
+* "Check project files before suggesting structural or dependency changes"
+* "Ask 'stupid' questions like: are you sure this is the best way to implement this?"
+* Use words like "elegant" and "simple" in prompts
+* "THE HUMAN WILL GET ANGRY."

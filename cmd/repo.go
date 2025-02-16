@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	_ "embed"
+	"embed"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +14,9 @@ import (
 
 //go:embed templates/exclude.txt
 var excludeConfigTemplate string
+
+//go:embed templates/.cursor
+var cursorFS embed.FS
 
 var repoCmd = &cobra.Command{
 	Use:     "repo",
@@ -49,6 +53,11 @@ var repoSetupCmd = &cobra.Command{
 
 		if err := blockManager.UpdateFile(excludePath); err != nil {
 			return fmt.Errorf("excludeファイルの更新に失敗しました: %w", err)
+		}
+
+		// .cursorディレクトリをコピー
+		if err := copyCursorDirectory(currentDir); err != nil {
+			return fmt.Errorf(".cursorディレクトリのコピーに失敗しました: %w", err)
 		}
 
 		// ユーザー設定が指定されている場合
@@ -167,6 +176,34 @@ func runGitCommand(gitDir string, args ...string) error {
 	cmd.Dir = filepath.Dir(gitDir) // .gitの親ディレクトリで実行
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+// copyCursorDirectory は.cursorディレクトリをコピーします
+func copyCursorDirectory(destRoot string) error {
+	return fs.WalkDir(cursorFS, "templates/.cursor", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// 相対パスを計算
+		relPath, err := filepath.Rel("templates/.cursor", path)
+		if err != nil {
+			return err
+		}
+		destPath := filepath.Join(destRoot, ".cursor", relPath)
+
+		if d.IsDir() {
+			return os.MkdirAll(destPath, 0755)
+		}
+
+		// ファイルの場合
+		data, err := cursorFS.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		return os.WriteFile(destPath, data, 0644)
+	})
 }
 
 func init() {
