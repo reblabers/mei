@@ -6,14 +6,28 @@ meip() {
   mei "$@" | peco
 }
 
+# aliases
+alias pc="peco"
+
+# similar to `something | xargs command`
 xa() {
   local stdin
   read -r stdin
   "$@" "$stdin"
 }
 
-cdx() {
+# similar to `something | cd`
+xcd() {
   xa cd
 }
 
-alias pc="peco"
+# pecoでhistoryを選択
+# https://qiita.com/reireias/items/fd96d67ccf1fdffb24ed#history-with-peco
+function peco-history-selection() {
+    BUFFER=`history -n 1 | tail -r | awk '!a[$0]++' | peco`
+    CURSOR=$#BUFFER
+    zle reset-prompt
+}
+
+zle -N peco-history-selection
+bindkey '^R' peco-history-selection
