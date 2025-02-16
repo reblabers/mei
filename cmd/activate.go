@@ -39,15 +39,15 @@ var activateCmd = &cobra.Command{
 		return nil
 	},
 	// カスタムの使用法メッセージ
-	Example: `  # Zshの場合
-  eval "$(mei activate zsh)"
+	Example: fmt.Sprintf(`  # Zshの場合
+  eval "$(%s/.local/bin/mei activate zsh)"
 
   # Bashの場合
-  eval "$(mei activate bash)"
+  eval "$(%s/.local/bin/mei activate bash)"
 
   # .zshrcや.bashrcに追加する場合
-  echo 'eval "$(mei activate zsh)"' >> ~/.zshrc  # Zshの場合
-  echo 'eval "$(mei activate bash)"' >> ~/.bashrc  # Bashの場合`,
+  echo 'eval "$(%s/.local/bin/mei activate zsh)"' >> ~/.zshrc  # Zshの場合
+  echo 'eval "$(%s/.local/bin/mei activate bash)"' >> ~/.bashrc  # Bashの場合`, os.Getenv("HOME"), os.Getenv("HOME"), os.Getenv("HOME"), os.Getenv("HOME")),
 }
 
 func generateShellScript(shell string) string {
