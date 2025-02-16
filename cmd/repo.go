@@ -15,8 +15,9 @@ import (
 var excludeConfigTemplate string
 
 var repoCmd = &cobra.Command{
-	Use:   "repo",
-	Short: "リポジトリ関連のコマンドです",
+	Use:     "repo",
+	Aliases: []string{"r"},
+	Short:   "リポジトリ関連のコマンドです",
 }
 
 var repoSetupCmd = &cobra.Command{
@@ -136,6 +137,30 @@ var repoFavAddCmd = &cobra.Command{
 	},
 }
 
+// repoLsCmd の定義
+var repoLsCmd = &cobra.Command{
+	Use:   "ls",
+	Short: "リポジトリの一覧を表示します",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("ホームディレクトリの取得に失敗しました: %w", err)
+		}
+		gitsDir := filepath.Join(homeDir, "gits")
+		files, err := os.ReadDir(gitsDir)
+		if err != nil {
+			return fmt.Errorf("ディレクトリの読み込みに失敗しました: %w", err)
+		}
+		for _, file := range files {
+			if !file.IsDir() {
+				continue
+			}
+			fmt.Println(filepath.Join(gitsDir, file.Name()))
+		}
+		return nil
+	},
+}
+
 // runGitCommand はGitコマンドを実行します
 func runGitCommand(gitDir string, args ...string) error {
 	cmd := exec.Command("git", args...)
@@ -149,5 +174,6 @@ func init() {
 	repoCmd.AddCommand(repoSetupCmd)
 	repoCmd.AddCommand(repoFavCmd)
 	repoFavCmd.AddCommand(repoFavAddCmd)
+	repoCmd.AddCommand(repoLsCmd)
 	repoSetupCmd.Flags().String("user", "", "Gitユーザー名を指定します")
 }
