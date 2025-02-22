@@ -29,10 +29,10 @@ bindkey '^R' peco-history-selection
 
 # pecoでcd
 jjc() {
-  ls | pcd
+  ls | peco | xa cd
 }
 
 # pecoでmei repo ls
 jjr() {
-  mei repo ls | pxa cursor
+  mei repo ls | peco | xa cursor
 }

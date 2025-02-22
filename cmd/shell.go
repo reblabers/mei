@@ -75,7 +75,7 @@ var shellSetupCmd = &cobra.Command{
 			return fmt.Errorf("テンプレートの実行に失敗しました: %w", err)
 		}
 
-		blockManager := config.NewBlockManager("custom", buf.String(), "#")
+		blockManager := config.NewBlockManager("mei", buf.String(), "#")
 
 		if err := blockManager.UpdateFile(rcFile); err != nil {
 			return fmt.Errorf("設定の更新に失敗しました: %w", err)
