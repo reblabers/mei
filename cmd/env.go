@@ -26,7 +26,7 @@ var envAddCmd = &cobra.Command{
 			return fmt.Errorf("ホームディレクトリの取得に失敗しました: %w", err)
 		}
 
-		envFileSource := filepath.Join(homeDir, "gits", ".env", key)
+		envFileSource := filepath.Join(homeDir, ".env", key)
 
 		// .envファイルが存在しない場合はエラー
 		if _, err := os.Stat(envFileSource); os.IsNotExist(err) {
