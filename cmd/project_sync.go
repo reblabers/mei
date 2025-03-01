@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"mei/internal/config"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -47,6 +48,7 @@ var projectSyncCmd = &cobra.Command{
 				projects = append(projects, Project{
 					Name:      filepath.Base(path),
 					Path:      path,
+					GitUser:   "", // 空のGitUser
 					CreatedAt: time.Now(), // nilではなく現在時刻を設定
 				})
 			}
@@ -74,22 +76,84 @@ var projectSyncCmd = &cobra.Command{
 			return
 		}
 
-		// 各プロジェクトに .cursor ディレクトリをコピー
+		// 各プロジェクトに対して処理を実行
 		for _, project := range projects {
-			targetDir := filepath.Join(project.Path, ".cursor")
+			fmt.Printf("プロジェクト %s を同期中...\n", project.Name)
 			
-			// コピー処理を実行
+			// .cursor ディレクトリをコピー
+			targetDir := filepath.Join(project.Path, ".cursor")
 			err := copyDir(cursorSourceDir, targetDir)
 			if err != nil {
-				fmt.Printf("%s へのコピーに失敗しました: %v\n", project.Name, err)
+				fmt.Printf("%s へのcursorディレクトリのコピーに失敗しました: %v\n", project.Name, err)
 				continue
 			}
 			
-			fmt.Printf("%s に .cursor をコピーしました\n", project.Name)
+			// repo setup相当の処理を実行
+			if err := setupRepo(project); err != nil {
+				fmt.Printf("%s のrepo setup処理に失敗しました: %v\n", project.Name, err)
+				continue
+			}
+			
+			fmt.Printf("%s の同期が完了しました\n", project.Name)
 		}
 		
 		fmt.Println("すべてのプロジェクトの同期が完了しました")
 	},
+}
+
+// setupRepo はプロジェクトに対してrepo setup相当の処理を行います
+func setupRepo(project Project) error {
+	// gitディレクトリの確認
+	gitDir := filepath.Join(project.Path, ".git")
+	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
+		// Gitリポジトリがない場合はスキップ
+		fmt.Printf("%s はGitリポジトリではありません。スキップします。\n", project.Name)
+		return nil
+	}
+
+	// .git/info/excludeファイルのパスを構築
+	excludePath := filepath.Join(gitDir, "info", "exclude")
+
+	// info ディレクトリが存在しない場合は作成
+	infoDir := filepath.Dir(excludePath)
+	if err := os.MkdirAll(infoDir, 0755); err != nil {
+		return fmt.Errorf("infoディレクトリの作成に失敗しました: %w", err)
+	}
+
+	// excludeファイルを更新
+	blockManager := config.NewBlockManager("mei", excludeConfigTemplate, "#")
+	if err := blockManager.UpdateFile(excludePath); err != nil {
+		return fmt.Errorf("excludeファイルの更新に失敗しました: %w", err)
+	}
+
+	// GitUser設定が指定されている場合はGit設定を更新
+	if project.GitUser != "" {
+		// リポジトリのルートディレクトリパスを取得（.gitの親ディレクトリ）
+		repoRoot := filepath.Dir(gitDir)
+		repoName := filepath.Base(repoRoot)
+
+		// Git設定を実行
+		gitCommands := []struct {
+			args []string
+			desc string
+			ignoreError bool
+		}{
+			{[]string{"config", "--local", "user.name", project.GitUser}, "ユーザー名の設定", false},
+			{[]string{"config", "--local", "user.email", project.GitUser + "@gmail.com"}, "メールアドレスの設定", false},
+			// originの削除（存在しない場合のエラーは無視）
+			{[]string{"remote", "remove", "origin"}, "既存のoriginの削除", true},
+			{[]string{"remote", "add", "origin", fmt.Sprintf("git@%s.github.com:%s/%s.git", project.GitUser, project.GitUser, repoName)}, "リモートの設定", false},
+		}
+
+		for _, cmd := range gitCommands {
+			if err := runGitCommand(gitDir, cmd.args...); err != nil && !cmd.ignoreError {
+				return fmt.Errorf("%sに失敗しました: %w", cmd.desc, err)
+			}
+		}
+		fmt.Printf("%s のGitユーザー設定を更新しました（%s）\n", project.Name, project.GitUser)
+	}
+
+	return nil
 }
 
 // ディレクトリをコピーする関数
@@ -157,6 +221,8 @@ func copyFile(src, dst string) error {
 	}
 	return os.Chmod(dst, srcInfo.Mode())
 }
+
+// runGitCommandはrepo.goで定義されているため、ここでは宣言しません
 
 func init() {
 	projectCmd.AddCommand(projectSyncCmd)

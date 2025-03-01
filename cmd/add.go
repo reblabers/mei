@@ -14,6 +14,7 @@ import (
 type Project struct {
 	Name      string    `yaml:"name"`       // プロジェクト名（デフォルトはディレクトリ名）
 	Path      string    `yaml:"path"`       // プロジェクトのパス
+	GitUser   string    `yaml:"git_user,omitempty"` // Gitユーザー名（省略可能）
 	CreatedAt time.Time `yaml:"created_at"` // 登録日時
 }
 
@@ -91,6 +92,13 @@ var addCmd = &cobra.Command{
 			Path:      currentDir,
 			CreatedAt: time.Now(),
 		}
+		
+		// git-userオプションが指定されていれば設定
+		gitUser, err := cmd.Flags().GetString("git-user")
+		if err == nil && gitUser != "" {
+			newProject.GitUser = gitUser
+		}
+		
 		projects = append(projects, newProject)
 
 		// YAMLとして保存
@@ -113,4 +121,5 @@ var addCmd = &cobra.Command{
 func init() {
 	// rootCmd.AddCommand(addCmd) // 古い登録方法
 	projectCmd.AddCommand(addCmd) // projectコマンドのサブコマンドとして登録
+	addCmd.Flags().String("git-user", "", "プロジェクト用のGitユーザー名を指定します")
 } 
