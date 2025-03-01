@@ -1,5 +1,5 @@
 ---
-description: セッション間でプロジェクト情報を文書化することによって、エージェントがコンテキストを維持するのを助けるメモリーバンクシステム。
+description: A memory bank system that helps agents maintain context across sessions by documenting project information.
 globs: 
 alwaysApply: false
 ---

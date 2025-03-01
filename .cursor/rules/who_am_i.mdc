@@ -1,5 +1,5 @@
 ---
-description: AIアシスタントとユーザーの役割と関係性を定義するルール。ユーザーのプログラミングスキルとAIの強み・弱みを明確にし、効率的な協業方法を示す。
+description: Defines AI-user roles, highlighting user programming expertise and AI capabilities for effective collaboration.
 globs: 
 alwaysApply: true
 ---
