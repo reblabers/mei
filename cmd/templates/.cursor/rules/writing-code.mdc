@@ -5,7 +5,7 @@ globs: *.kt, *.sh, *.py, *.go
 Before writing code:
 1. Analyze all code files thoroughly
 2. Get full context
-3. Create `{featurename}.md` file into @.cursor/tmp
+3. Create `{featurename}.md` file into `.cursor/tmp`
 3. Write an implementation plan to a md file
 4. Then implement code
 

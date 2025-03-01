@@ -19,4 +19,5 @@ func Execute() {
 
 func init() {
 	rootCmd.AddCommand(envCmd)
+	// addコマンドは既にadd.goのinit()で登録されているため、ここでは不要
 }
