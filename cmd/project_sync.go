@@ -153,6 +153,44 @@ func setupRepo(project Project) error {
 		fmt.Printf("%s のGitユーザー設定を更新しました（%s）\n", project.Name, project.GitUser)
 	}
 
+	// EnvKeys設定が指定されている場合は環境変数を更新
+	if len(project.EnvKeys) > 0 {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("ホームディレクトリの取得に失敗しました: %w", err)
+		}
+
+		// 環境変数ファイルのパスを~/.mei/env/に変更
+		meiDir := filepath.Join(homeDir, ".mei")
+		envFileDest := filepath.Join(project.Path, ".env")
+		
+		for _, key := range project.EnvKeys {
+			envFileSource := filepath.Join(meiDir, "env", key)
+			
+			// .envファイルが存在しない場合はスキップ
+			if _, err := os.Stat(envFileSource); os.IsNotExist(err) {
+				fmt.Printf("警告: envファイルが見つかりません: %s\n", envFileSource)
+				continue
+			}
+			
+			// .envファイルの内容を読み込む
+			content, err := os.ReadFile(envFileSource)
+			if err != nil {
+				fmt.Printf("警告: .envファイルの読み込みに失敗しました: %v\n", err)
+				continue
+			}
+			
+			// BlockManagerを使って.envファイルに追記・上書き
+			blockManager := config.NewBlockManager(key, string(content), "#")
+			if err := blockManager.UpdateFile(envFileDest); err != nil {
+				fmt.Printf("警告: .envファイルの更新に失敗しました: %v\n", err)
+				continue
+			}
+			
+			fmt.Printf("%s の環境変数(%s)を更新しました\n", project.Name, key)
+		}
+	}
+
 	return nil
 }
 

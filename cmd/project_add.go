@@ -15,6 +15,7 @@ type Project struct {
 	Name      string    `yaml:"name"`       // プロジェクト名（デフォルトはディレクトリ名）
 	Path      string    `yaml:"path"`       // プロジェクトのパス
 	GitUser   string    `yaml:"git_user,omitempty"` // Gitユーザー名（省略可能）
+	EnvKeys   []string  `yaml:"env_keys,omitempty"` // 環境変数キーのリスト（省略可能）
 	CreatedAt time.Time `yaml:"created_at"` // 登録日時
 }
 
