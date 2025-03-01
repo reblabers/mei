@@ -111,5 +111,6 @@ var addCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(addCmd)
+	// rootCmd.AddCommand(addCmd) // 古い登録方法
+	projectCmd.AddCommand(addCmd) // projectコマンドのサブコマンドとして登録
 } 
