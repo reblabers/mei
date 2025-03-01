@@ -1,16 +1,25 @@
 package cmd
 
 import (
+	"embed"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
 	"mei/internal/config"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+	"io/fs"
 )
+
+//go:embed templates/exclude.txt
+var excludeConfigTemplate string
+
+//go:embed templates/.cursor
+var cursorFS embed.FS
 
 var projectSyncCmd = &cobra.Command{
 	Use:   "sync",
@@ -260,7 +269,41 @@ func copyFile(src, dst string) error {
 	return os.Chmod(dst, srcInfo.Mode())
 }
 
-// runGitCommandはrepo.goで定義されているため、ここでは宣言しません
+// copyCursorDirectory は.cursorディレクトリをコピーします
+func copyCursorDirectory(destRoot string) error {
+	return fs.WalkDir(cursorFS, "templates/.cursor", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// 相対パスを計算
+		relPath, err := filepath.Rel("templates/.cursor", path)
+		if err != nil {
+			return err
+		}
+		destPath := filepath.Join(destRoot, ".cursor", relPath)
+
+		if d.IsDir() {
+			return os.MkdirAll(destPath, 0755)
+		}
+
+		// ファイルの場合
+		data, err := cursorFS.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		return os.WriteFile(destPath, data, 0644)
+	})
+}
+
+// runGitCommand はGitコマンドを実行します
+func runGitCommand(gitDir string, args ...string) error {
+	cmd := exec.Command("git", args...)
+	cmd.Dir = filepath.Dir(gitDir) // .gitの親ディレクトリで実行
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
 
 func init() {
 	projectCmd.AddCommand(projectSyncCmd)
