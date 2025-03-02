@@ -15,9 +15,6 @@ import (
 	"io/fs"
 )
 
-//go:embed templates/exclude.txt
-var excludeConfigTemplate string
-
 //go:embed templates/.cursor
 var cursorFS embed.FS
 
@@ -120,6 +117,13 @@ func setupRepo(project Project) error {
 		return nil
 	}
 
+	// ホームディレクトリを取得
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("ホームディレクトリの取得に失敗しました: %w", err)
+	}
+	meiDir := filepath.Join(homeDir, ".mei")
+
 	// .git/info/excludeファイルのパスを構築
 	excludePath := filepath.Join(gitDir, "info", "exclude")
 
@@ -130,9 +134,28 @@ func setupRepo(project Project) error {
 	}
 
 	// excludeファイルを更新
-	blockManager := config.NewBlockManager("mei", excludeConfigTemplate, "#")
+	// ~/.mei/git/excludeからテンプレートを読み込む
+	meiExcludePath := filepath.Join(meiDir, "git", "exclude")
+	excludeContent, err := os.ReadFile(meiExcludePath)
+	if err != nil {
+		return fmt.Errorf("excludeテンプレートの読み込みに失敗しました: %w", err)
+	}
+	
+	blockManager := config.NewBlockManager("mei", string(excludeContent), "#")
 	if err := blockManager.UpdateFile(excludePath); err != nil {
 		return fmt.Errorf("excludeファイルの更新に失敗しました: %w", err)
+	}
+
+	// ~/.mei/github ディレクトリからプロジェクト先の.githubディレクトリにファイルをコピー
+	meiGithubDir := filepath.Join(meiDir, "github")
+	if _, err := os.Stat(meiGithubDir); !os.IsNotExist(err) {
+		// ~/.mei/github ディレクトリが存在する場合
+		projectGithubDir := filepath.Join(project.Path, ".github")
+		if err := copyDir(meiGithubDir, projectGithubDir); err != nil {
+			fmt.Printf("警告: %s の.githubディレクトリのコピーに失敗しました: %v\n", project.Name, err)
+		} else {
+			fmt.Printf("%s の.githubディレクトリを更新しました\n", project.Name)
+		}
 	}
 
 	// GitUser設定が指定されている場合はGit設定を更新
@@ -164,13 +187,7 @@ func setupRepo(project Project) error {
 
 	// EnvKeys設定が指定されている場合は環境変数を更新
 	if len(project.EnvKeys) > 0 {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("ホームディレクトリの取得に失敗しました: %w", err)
-		}
-
 		// 環境変数ファイルのパスを~/.mei/env/に変更
-		meiDir := filepath.Join(homeDir, ".mei")
 		envFileDest := filepath.Join(project.Path, ".env")
 		
 		for _, key := range project.EnvKeys {

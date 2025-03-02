@@ -1,6 +1,0 @@
-.DS_Store
-.windsurfrules
-.cursor
-.idea
-.vscode
-.env
